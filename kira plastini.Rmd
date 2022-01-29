@@ -1,0 +1,158 @@
+---
+Title: "Kira plastini customer behaviour"
+Author: "KIpsang"
+Date: "1/29/2022"
+Output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Kira Plastinina customer’s behavior analysis
+
+## 1.Objective: 
+
+    a.) Understanding Customer Behavior.
+    b.) Understanding the characteristics of customer groups.
+
+## 2.Problem Statement.
+
+Businesses in this day and time have learnt the power of leveraging data for product optimization and also to channel resources where they are needed. Unorthodox methods of marketing and assessing customer behavior based on gut feeling and guesses have led to losses in companies and also many have lost customers to companies that understand their customers in a deeper level.In this scope of analysis we will delve in understanding customer behavior and cluster them to groups for optimum product development through effective marketing strategies.
+
+## 3.) Data Sourcing. 
+
+This data was sourced from kira Plastina's eCommerce website as the product is sold through a chain of retail stores in Russia,Ukraine,Kazakhstan,Belarus,Chins,Philippines and Armenia. 
+
+## 4. Experimental Design
+
+This scope of analysis will involve reviewing data to inspect its fitness to carry out analysis. This will later be followed by a deep analysis of the variables present in our data while understanding customers behavior from these results. The solution will finally be implemented by segmenting the customers into similar clusters and reviewing the unique characteristics of these groups.
+
+## 5.) Checking the data.
+```{r}
+# Viewing the data structures and its constituents
+library(data.table)
+customer_df<-fread("http://bit.ly/EcommerceCustomersDataset")
+head(customer_df)
+# The data is comprised of 10 numerical and 8 categorical variables. In them contains the nature of their operation in the e commerce website.
+```
+
+
+
+```{r Customer_df, echo=FALSE}
+
+str(customer_df)
+```
+
+The dataset contains 12330 observations of 18 variables.
+
+```{r}
+# Checking the dimension of my dataset
+dim(customer_df)
+# My dataset has 12330 rows and 18 columns.
+```
+## 6.) Cleaning data
+
+### Duplicated values
+```{r}
+# Duplicated values
+length(which(duplicated.data.frame(customer_df)))
+# 119 rows are duplicated
+```
+```{r}
+# Dealing with duplicated rows
+customer_df<-customer_df[!duplicated(customer_df),]
+head(customer_df)
+```
+```{r}
+# Confirming the operation
+length(which(duplicated.data.frame(customer_df)))
+# No duplicated values present
+```
+
+```{r}
+# Checking for missing values
+length(which(is.na.data.frame(customer_df)))
+# We have 96 missing values
+```
+Checking specific columns with the missing values
+```{r}
+# Checking the  missing number count
+customer_df[!complete.cases(customer_df),]
+# the are quite a lot to get rid off and they carry much data involving site information
+```
+To understand the  missing values 
+```{r}
+
+colSums(is.na(customer_df))
+
+# We get to understand that there are a total of 96 missing values in the dataset and they are mainly found in the administrative,Informational,product related ,bounce rates and exit rates sites. Their proportions also are similar in magnitude.
+```
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
