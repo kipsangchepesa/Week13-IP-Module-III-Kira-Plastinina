@@ -1,15 +1,15 @@
 ---
 Title: "Kira plastini customer behaviour"
-Author: "KIpsang"
+Author:" Kipsang"
 Date: "1/29/2022"
-Output: html_document
+Output: "html_document"
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Kira Plastinina customer’s behavior analysis
+#Kira Plastinina customer behaviour analysis
 
 ## 1.Objective: 
 
@@ -18,17 +18,17 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## 2.Problem Statement.
 
-Businesses in this day and time have learnt the power of leveraging data for product optimization and also to channel resources where they are needed. Unorthodox methods of marketing and assessing customer behavior based on gut feeling and guesses have led to losses in companies and also many have lost customers to companies that understand their customers in a deeper level.In this scope of analysis we will delve in understanding customer behavior and cluster them to groups for optimum product development through effective marketing strategies.
+#### Businesses in this day and time have learnt the power of leveraging data for product optimization and also to channel resources where they are needed. Unorthodox methods of marketing and assessing customer behavior based on gut feeling and guesses have led to losses in companies and also many have lost customers to companies that understand their customers in a deeper level.In this scope of analysis we will delve in understanding customer behavior and cluster them to groups for optimum product development through effective marketing strategies.
 
 ## 3.) Data Sourcing. 
 
-This data was sourced from kira Plastina's eCommerce website as the product is sold through a chain of retail stores in Russia,Ukraine,Kazakhstan,Belarus,Chins,Philippines and Armenia. 
+#### This data was sourced from kira Plastina's ecommerce website as the product is sold through a chain of retail stores in Russia,Ukraine,Kazakhstan,Belarus,Chins,Philipines and Armenia. 
 
 ## 4. Experimental Design
-
-This scope of analysis will involve reviewing data to inspect its fitness to carry out analysis. This will later be followed by a deep analysis of the variables present in our data while understanding customers behavior from these results. The solution will finally be implemented by segmenting the customers into similar clusters and reviewing the unique characteristics of these groups.
+#### This scope of analysis will involve reviewing data to inspect its fittness to carry out analysis. This will later be followed by a deep analysis of the variables present in our data while understanding customers behaviour from these results. The solution will finaly be implemented by segemting the customers into similar clusters and reviewing the unique characteristics of these groups.
 
 ## 5.) Checking the data.
+
 ```{r}
 # Viewing the data structures and its constituents
 library(data.table)
@@ -37,15 +37,9 @@ head(customer_df)
 # The data is comprised of 10 numerical and 8 categorical variables. In them contains the nature of their operation in the e commerce website.
 ```
 
-
-
-```{r Customer_df, echo=FALSE}
-
+```{r}
 str(customer_df)
 ```
-
-The dataset contains 12330 observations of 18 variables.
-
 ```{r}
 # Checking the dimension of my dataset
 dim(customer_df)
@@ -54,6 +48,7 @@ dim(customer_df)
 ## 6.) Cleaning data
 
 ### Duplicated values
+
 ```{r}
 # Duplicated values
 length(which(duplicated.data.frame(customer_df)))
@@ -69,6 +64,7 @@ head(customer_df)
 length(which(duplicated.data.frame(customer_df)))
 # No duplicated values present
 ```
+## Missing values
 
 ```{r}
 # Checking for missing values
@@ -76,83 +72,526 @@ length(which(is.na.data.frame(customer_df)))
 # We have 96 missing values
 ```
 Checking specific columns with the missing values
+
 ```{r}
 # Checking the  missing number count
 customer_df[!complete.cases(customer_df),]
 # the are quite a lot to get rid off and they carry much data involving site information
 ```
-To understand the  missing values 
+#### Using the mice function to get a better understanding of missing data.
 ```{r}
-
-colSums(is.na(customer_df))
-
+library(mice)
+md.pattern(customer_df,plot = TRUE,rotate.names = TRUE)
 # We get to understand that there are a total of 96 missing values in the dataset and they are mainly found in the administrative,Informational,product related ,bounce rates and exit rates sites. Their proportions also are similar in magnitude.
 ```
 
+Imputing them using the mice function
 ```{r}
+# Assessing the imputation methods for mice
+methods(mice)
+```
+ Imputing using the mice function
+```{r}
+# Using random forest as the imputation method as most of our missing values are discrete
+#customer_df_full<-mice(customer_df,m=5,
+                       #method="rf",
+                       #maxit = 10,seed = 500)
+```
 
+```{r}
+# Getting a summary of the full set
+summary(customer_df_full) 
+# The imputation was successful with five complete data sets using random forest method.
+```
+# Getting the first dataset and visualizing the imputed values against my observed values to check for plausibility of the imputations
+```{r}
+complete_df<-complete(customer_df_full,1)
+# Checking for missing values
+length(which(is.na.data.frame(complete_df)))
+# No missing value present
+```
+```{r}
+table(complete_df$Administrative)
+plot(table(complete_df$Administrative))
+```
+```{r}
+# Checking the unique values of distinct values in the original table with missing values
+original<-customer_df$Administrative
+# Checking the imputed values
+customer_df_full$imp$Administrative
+# Checking the new value
+imputed<-complete_df$Administrative
+```
+```{r}
+boxplot(original,imputed,main="Checking for distribution of original vs imputed",xlab="original and imputed",ylab="Distribution within set")
+# The distribution is similar, that confirms the plausibility of the imputed values
+```
+```{r}
+# Checking the unique values of distinct values in the original table with missing values
+original_ex<-customer_df$ExitRates
+# Checking the imputed values
+customer_df_full$imp$ExitRates
+# Checking the new value
+imputed_ex<-complete_df$ExitRates
+```
+```{r}
+# Checking the distribution between the original with null values and the imputed values to check for similarity
+boxplot(original_ex,imputed_ex,main="Checking for distribution of original vs imputed",xlab="original and imputed",ylab="Distribution within set")
+```
+### Checking for Outliers and anomalies
+
+```{r}
+# Rechecking the clean and complete dataset
+head(complete_df)
+```
+
+### Numerical varables
+
+```{r}
+# Rechecking numeric datatypes
+str(complete_df)
+```
+### A function to plot a box plot for numerical values and detect outliers 
+```{r}
+# Boxplot of the individual variables
+box_plot<-function(data,var,main){
+  boxplot(data[[var]],ylab="Distribution of values",main=main)
+}
+```
+
+#### a.) 
+```{r}
+#  A box plot of Administrative distribution
+box_plot(complete_df,1,"A box plot of the distribution of Administrative page")
+# This represent the number of administrative pages visited by a visited in that session.
+# Most customers visited less than 5 administrative sites. It is also possible for them to visit more than 25 pages . This set wont be treated as an outlier. Users if this page could be actual administrators and maybe customers.
+```
+#### Checking the extent of outliers
+```{r}
+# Viewing the distribution of outliers
+outs<-boxplot.stats(complete_df$Administrative)$out
+print(length(outs))
+plot(outs,main="Administration of Outliers",col="blue")
+# 404 data points are considered outliers out of the 12,330 points.
+```
+```{r}
+box_plot(complete_df,2,"A box plot of the distribution of Administrative Duration")
+# The outliers present here are absolutely extreme. Its however important to note that time spent on site could be in seconds thus 3600 translates to an hour. Thus , for now, the data wont be treated as an outlier. Users of this page could be users on an administrative levels and can validly spend time there.
+```
+```{r}
+# Checking for the count of outliers
+outs1<-boxplot.stats(complete_df$Administrative_Duration)$out
+print(length(outs1))
+# This are too many to be removed
+```
+
+```{r}
+# Outliers detection in admin pages and duration
+min(complete_df$Administrative)
+min(complete_df$Administrative_Duration)
+max(complete_df$Administrative_Duration)
+# -1 for a duration is an illegitimate data point thus this anomaly will be dealt with by imputing them with values given from their quantile distribution
+```
+
+```{r}
+min(complete_df$Administrative_Duration)
+#max(complete_df$Administrative_Duration)
+```
+#### The operation to remove the lower quantile of outliers did not change the minimum from -1 and replacing the values past the 3rd quantile drops them to lower than 300. This greately tampers with the actual distribution of the data.
+
+
+```{r}
+# Informational pages
+box_plot(complete_df,3,"A box plot of the distribution of Informational page")
+# The pages visited vary from 0 to 20 . The points stated as outliers will be treated as legitimate points because informational pages can genuinely be 20 . Its however evident that most people dont spent time in the informational page
+```
+
+```{r}
+out2<-boxplot.stats(complete_df$Informational)$out
+print(length(out2))
+# These are too many to be removed. They wont be replaced as id consider them legitimate data points
+```
+
+```{r}
+# Checking for outliers in the time spent in the informational page
+box_plot(complete_df,4,"A box plot of the distribution of Informational Duration")
+# As stated formally in the administrative duration the units could be small enough and time is a continuously growing variable thus will not be removed
+```
+
+```{r}
+box_plot(complete_df,5,"A box plot of the distribution of Product Related pages")
+# Depending on the amount of product this e commerce website seem to have a lot of pages. Its extreme to have 700 pages visited per session but considering that some visitors rarely log out of these pages .
+```
+```{r}
+# Duration spent per page
+box_plot(complete_df,6,"A box plot of the distribution of Product Related Duration")
+# The high numbers stated here are totally valid as this time is measured per page and considering that these pages are alot the time spent on each page would considerable be expected to be high.
+```
+```{r}
+# Checking for an anomaly in product duration
+min(complete_df$ProductRelated_Duration)
+# This is an anomaly to be dealt with
+```
+
+
+```{r}
+# Distribution of bounce rates.These are the % of visitors who enter the site and then drop off without triggering any request.
+box_plot(complete_df,7,"A box plot of the distribution of Bounce Rates")
+# They vary from 0 to 20 %. The points are genuine thus will not be eliminated.
+```
+```{r}
+min(complete_df$BounceRates)
+```
+
+
+```{r}
+# % of considerably last session
+box_plot(complete_df,8,"A box plot of the distribution of Exit Rates")
+# The higher the exit rate, the more likely it is for one to leave the session.
+```
+
+```{r}
+min(complete_df$ExitRates)
+```
+
+```{r}
+# Page value for a webpage that a user visited before completing the e commerce transaction. 
+box_plot(complete_df,9,"A box plot of the distribution of Page Values")
+# Its interesting to discover that page value range from 0 to more than 300. The choice NOT to remove the product pages now totally makes sense.
 ```
 
 
 
+```{r}
+# These is the closeness of the site visiting time to a special day
+box_plot(complete_df,10,"A box plot of the distribution of Special Days")
+# Its maximum when we are close to a special day and close to 1 and minimum when not close to a soecial day (0).
+```
+#### We can therefore conclude from the outliers that.
+* The pages visited depend on the content posted in the e commerce website. The extreme values detected thus cannot be treated as outliers.
+* A challenge can however be seen in minimum duration being - 1 and thus can be treated as outliers and will be handles by replacing them by zero since imputation by quantile values did not work.
+
+### Dealing with anomalies
+```{r}
+# Replacing duration of -1 with zero
+complete_df[complete_df$Administrative_Duration==-1,"Administrative_Duration"]<-0
+# Confirming the operation
+min(complete_df$Administrative_Duration)
+```
+```{r}
+complete_df[complete_df$Informational_Duration==-1,"Informational_Duration"]<-0
+# Confirming the operation
+min(complete_df$Informational_Duration)
+```
+```{r}
+complete_df[complete_df$ProductRelated_Duration==-1,"ProductRelated_Duration"]<-0
+# Confirming the operation
+min(complete_df$ProductRelated_Duration)
+```
+### Outlier or anomaly detection in Discrete values
+```{r}
+unique(complete_df$Month)
+# We don't have the month of January and April. That's an anomaly that we are constrained on replacing for this scope of the analysis
+```
 
 
+```{r}
+# Checking for anomalies in the visitor type page
+unique(complete_df$VisitorType)
+# There are three categories Regulars,New_visitors and other who i would consider to be developers or administrators etc
+```
+```{r}
+# Weekday weekend status
+unique(complete_df$Weekend)
+# No anomaly detected
+```
 
 
+```{r}
+# Revenue status
+unique(complete_df$Revenue)
+# No anomaly detected. I would however guess that this are the users that add revenue into the company.
+```
+```{r}
+# Checking for outliers in the OS,Browser, and traffic type columns
+unique(complete_df$OperatingSystems)
+# No anomaly detected. This would be considered ad the different types of operating systems used.
+```
+```{r}
+# Checking for anomalies in the browser type and region factors
+unique(complete_df$Browser)
+unique(complete_df$Region)
+unique(complete_df$TrafficType)
+# No anomalies detected
+```
+## 7.) Exploratory data Analysis.
+
+### a.) Univariate Analysis.
+
+Numerical Continuous values
+
+A function to plot Density plot
+```{r}
+density_plot<-function(data,var,main){
+  plot(density(data[[var]]),ylab="Density of visitors",main=main)
+  polygon(density(data[[var]]),col = "blue",border="red")
+}
+```
+
+```{r}
+# Administrative plots
+density_plot(complete_df,1,"Distribution of visitors in Administration page")
+# The distribution of the number of pages visited in the administration section of the site
+# The  distribution is not gausian. The values are skewed to the left indicating many visitors don't visit many pages in the administration pages. The same is expected to be reflected in the duration distribution
+```
+```{r}
+# Duration distribution
+density_plot(complete_df,2,"Distribution of Duration per Administration page")
+# Time spent in the administration pages is skewed to the left. Most visitors dont spent time here.
+```
+```{r}
+# Informative page distribution
+density_plot(complete_df,3,"Distribution of vistors in informative pages")
+# The distribution is multi modal but skewed to the left as many people don't visit informative pages but they are considerably more than those who visit the admin pages. Some people go to as far as 25 pages in information
+```
+```{r}
+# Informative page distribution
+density_plot(complete_df,4,"Distribution of time spent in informative pages")
+# The distribution is skewed to to left and time spent is seen to be on the lower side
+```
+```{r}
+# Product page distribution
+density_plot(complete_df,5,"Distribution of visitors on Product related pages")
+# Though skewed to the left. The number of people is considerable higher than the rest of the pages. The product seem to be very concentrated as pages go to as high as 700 .
+```
+```{r}
+# Product page distribution
+density_plot(complete_df,6,"Distribution of time spent on Product related pages")
+# This is also skewed to the left meaning its concentrated on the lower end. We however have visitors spending as much as 60,000 units(unspecified) of time on the product related page
+```
+
+```{r}
+# Distribution of Bounce rates
+density_plot(complete_df,7,"Distribution of Bounce rates")
+# Alot of users don't bounce off the site as soon as they visit it as the rate is skewed to the left. We have a few individuals however who bounce off site considerably at a rate of 20 % .
+```
+```{r}
+# Distribution of Exit rates. calculated by (pages visited/ Total pages)
+density_plot(complete_df,8,"Distribution of Exit rates")
+# The distribution is fairly Gaussian with irregular mode values. The highest rate however is on the lower side.This could only mean that many people peruse more pages of our site, especially considering the denisty of pages in the product related site. Its important to note that the exit rate can be used to denote the likelihood of the page being the last. The higher the rate the higher the chances of that particular page being the page being the last. We will however view this in the bi-variate analysis while assessing its relation with other variables.
+```
+```{r}
+# Distribution of Page values
+density_plot(complete_df,9,"Distribution of Page values")
+# This is the average value of a webpage that a user visited before making a complete transaction. The higher the page value the higher the rate of complete transactions
+```
+```{r}
+# Distribution of Special days- closeness of a sites visiting time to a special day
+density_plot(complete_df,10,"Distribution of Special day proximity")
+# Very few sites are close to special days. We will see their relationship with the months in bivariate analysis.
+```
+
+### Discrete Variables
+```{r}
+barplot(table(complete_df$Month),main="Distribution of months",col = "blue",ylab = "count of visitors")
+# May has the highest visitors while February has the lowest count of users. That is an interesting discovery.
+```
+
+```{r}
+barplot(table(complete_df$VisitorType),main="Distribution of Visitor Type",col = "blue",ylab = "Count of visitors")
+# Returning customers are higher in count than new customers. 
+```
+```{r}
+# Weekday status distribution
+barplot(table(complete_df$Weekend),main="Weekend status",col = "blue",ylab = "Visitor count")
+# More users tend to visit the site during the weekdays as compared to weekends 
+```
+
+```{r}
+# Here we get to determine whether the users boil down to out traffic or not
+barplot(table(complete_df$Revenue),main="Revenue Status",col = "blue",ylab = "Visitor count")
+# Our users are not translating their activity on site to revenue, which is the main reason for our  analysis. Taking a deeper look at our analysis we wll know who generates more revenue and why we are not generating revenue generaly.
+```
+### Bivariate analysis
+
+#### Numerical- Numerical
+
+```{r}
+# Fishing out numerical columns to assess their correlation
+library("dplyr") 
+num_complete<-select_if(complete_df,is.numeric)
+str(num_complete)
+```
+```{r}
+# Assessing the correlation
+library(corrplot)
+corrplot(cor(num_complete),method = "circle",type="upper")
+# There is generally a high correlation between the site pages and their duration.
+# There can be seen to be a slightly negative correlation between administrative pages visited and exit rate. The columns that i will visualize are those with a correlation between the whether positive or negative.
+```
+#### It is inevitably exciting how these number reveal relationships.
+* There is a considerable positive relationship between pages and their duration meaning there is a corresponding increase in duration when there is a rise in the pages visited, Which we would expect as the more we flip into a page the more time we get to spend on the same page. This transcends to (administration,Informational and product related pages).
+* Another positive correlation is seen in the Exit rates and bounce rates. As i had explained earlier the higher the exit rate the higher the chances that that is the user's last page. This would eventually cause them to bounce or leave the site.Very interesting discovery.
+* An interestingly negative correlation is seen in the exit rates and the administrative page. It leads me to thinking that probably the administrative page is the first we encounter on a sight and thus the more the administrative pages the less likely it is that that is the users last page.
+
+```{r}
+# Plotting these to see relationships
+plot(complete_df$BounceRates,complete_df$ExitRates,main="Relationship between Bounce rates and Exit rates",col = "blue",xlab = "Bounce rates",ylab = "Exit rates")
+# As was explained by the correlation map. The relationship is linear and positive.
+```
+```{r}
+# Because there was a linear correlation we need to see the relationship between administrative and exit rate
+plot(complete_df$Administrative,complete_df$ExitRates,main="Relationship between Administration and Exit rates",col = "blue",xlab = "Administrative Page",ylab = "Exit rates")
+# As expected the relationship is inversely corresponding which leads me to thinking its the first page we encounter when we get into the sight. 
+```
+# Numerical_Categorical
+
+```{r}
+# Rechecking the datatypes
+str(complete_df)
+```
+```{r}
+# Assessing the proportion of true and false
+table(complete_df$Revenue)
+```
+What are the factors that directly affect the revenue status of the e-commerce site?
+
+```{r}
+library(ggplot2)
+ggplot(complete_df, 
+       aes(x = Administrative,
+           fill =Revenue)) +
+  geom_density(alpha = 0.4) +
+  labs(title = "Administrative page distribution with revenue status")
+# Since we can see the distribution of administrative pages and revenue status. It is evident that when the pages are less, the revenue is densely  populated in the FALSE meaning that at less administrative pages the revenue is mostly at false status. A paradigm shift is seen at higher pages where the revenue status is true
+```
+```{r}
+ggplot(complete_df, 
+       aes(x = Administrative_Duration,
+           fill =Revenue)) +
+  geom_density(alpha = 0.4) +
+  labs(title = "Duration in administrative page's relationship with revenue status")
+# The status is the same as the correlation is positive. 
+```
+```{r}
+ggplot(complete_df, 
+       aes(x = ProductRelated,
+           fill =Revenue)) +
+  geom_density(alpha = 0.4) +
+  labs(title = "Product related page relationship with revenue status")
+# The product related page poses a clear relationship with revenue status. This clearly shows that as one moves more in the product related pages the count of TRUE revenues increase.
+
+```
 
 
+```{r}
+# The relationship between bounce rates and revenue
+ggplot(complete_df, 
+       aes(x = BounceRates,
+           fill =Revenue)) +
+  geom_density(alpha = 0.4) +
+  labs(title = "Bounce rate's relationship with revenue status")
+# It is evident that the less bounce rates translate to TRUE revenues and more bounce rates translate to NO /FALSE revenues.
+```
 
 
+```{r}
+# The relationship between exit rates and revenue
+ggplot(complete_df, 
+       aes(x = ExitRates,
+           fill =Revenue)) +
+  geom_density(alpha = 0.4) +
+  labs(title = "Exit rate's relationship with revenue status")
+# Low exit rate means that the visitor is less likely to be in their last page and thus the status is populated at TRUE unlike when the exit rate is high which means that the probability of being in their last page is high thus the revenue status is false
+```
+```{r}
+# Relationship between page value and revenue status. Since the page value is the average value of the page a user visited before completing a transaction
+ggplot(complete_df, 
+       aes(x = PageValues,
+           fill =Revenue)) +
+  geom_density(alpha = 0.4) +
+  labs(title = "Page Value's relationship with revenue status")
+# Higher page values translate to a TRUE revenue.
+```
+Which months have a high special day rate
+```{r}
+ggplot(complete_df, 
+       aes(x = SpecialDay,
+           y=Month)) +
+  geom_boxplot() +
+  labs(title = "Special days relationship with months")
+# May and Feb seem to have high special day rates. 
+```
+### Multivariate analysis
+
+```{r}
+str(complete_df)
+```
+# Converting the strings to numeric columns to enable clustering is introducting alot of null values thus in this scope i will work with numerical columns
+
+## 8.) Implementing the solution
+```{r}
+# Selecting my features.
+str(num_complete)
+# Criterion used to select points
+# 1.) Independence- two variables that are correlated were not selected
+# 2) Numerical variables- Because a challenge was experience in encoding the string columns, Null values were being formed
+feat<-num_complete[,c(1,3,5,7,9,10)]
+# These are the numeric features
+# Selecting the labels
+label<-complete_df[,"Revenue"]
+feat
+```
+### Normalization of all the numerical features using the maxmin method
+```{r}
+normalize <- function(x){
+  return ((x-min(x)) / (max(x)-min(x)))
+}
+```
 
 
+```{r}
+# Scaling the features
+normal_features<-normalize(feat)
+summary(normal_features)
+```
+```{r}
+library(factoextra)
+result<-kmeans(normal_features,5,iter.max = 10)
+# Visualizing the result
+fviz_cluster(result,data=normal_features)
+# This visual is a bit hard to interpret.Using the elbow method to obtain the optimum number of clusters to use.
+```
+```{r}
+# Elbow method to point to check the best number of clusters to use
+fviz_nbclust(x=normal_features,FUNcluster = kmeans,method="silhouette")
+# 2 is the best clustering number to use
+```
+```{r}
+result1<-kmeans(normal_features,2,iter.max = 5)
+# Visualizing the result
+fviz_cluster(result1,data=normal_features)
+# Clusters are still overlapping. The K-means is hard to interpret especially when used with lots of data sets.
+```
+## Hierarchical clustering
+This clustering has an advantage of letting us be free with the number of clusters to choose. Its less messy as compared to K-means and easily interprateable
 
+ 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+```{r}
+# Obtaining the distance to be used to locate points
+dist_d<-dist(normal_features,method = "euclidian")
+# Hierarchical model
+h_model<-hclust(dist_d,method = "complete")
+# Plotting the dendrogram to visualize the similarity between points
+h_model
+# The dendrogram was not visually interprateable.
+```
+## 9.) Challenging the solution
+ In more details the clusters need to be studied to verify their validity for analysis and use by the company for segmentation.
+ The methods of clustering need to be improved and tweaked to give accurate results.
+## 10.) Follow up Questions
+Was the data sufficient for this scope of analysis? 
+Yes, a challenge was however experienced in encoding categorical columns to numeric columns for clustering purposes
+# Did we have the right question?
+Yes we did. The only reamaining thing is to learn more about clustering methods.
